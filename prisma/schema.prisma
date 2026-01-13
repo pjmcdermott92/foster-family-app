@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Profile {
+  id          String   @id @db.Uuid
+  fullName    String?  @map("full_name")
+  role        String   @default("foster-parent")
+  email       String?
+  phoneNumber String?  @map("phone_number")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  children    Child[]
+  documents   Document[]
+  events      Event[]
+  medications Medication[]
+  notes       Note[]
+
+  @@map("profiles")
+}
+
+model Child {
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id") @db.Uuid
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  middleName    String?   @map("middle_name")
+  dob           DateTime?
+  placementDate DateTime? @map("placement_date")
+  bio           String?
+  tags          String[]
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  childCaseworkers ChildCaseworker[]
+  childProviders   ChildProvider[]
+  owner            Profile           @relation(fields: [userId], references: [id])
+  documents        Document[]
+  events           Event[]
+  medications      Medication[]
+  notes            Note[]
+
+  @@map("children")
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  childId   String   @map("child_id")
+  userId    String   @map("user_id") @db.Uuid
+  content   String
+  tags      String[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  child  Child   @relation(fields: [childId], references: [id])
+  author Profile @relation(fields: [userId], references: [id])
+
+  @@map("notes")
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  childId     String    @map("child_id")
+  title       String
+  description String?
+  eventType   String?   @map("event_type")
+  startTime   DateTime  @map("start_time")
+  endTime     DateTime? @map("end_time")
+  color       String    @default("blue")
+  createdBy   String    @map("created_by") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  child Child   @relation(fields: [childId], references: [id], onDelete: Cascade)
+  user  Profile @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+
+  @@map("events")
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  childId   String   @map("child_id")
+  userId    String   @map("user_id") @db.Uuid
+  fileName  String   @map("file_name")
+  fileUrl   String   @map("file_url")
+  filetype  String?  @map("file_type")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  child  Child   @relation(fields: [childId], references: [id], onDelete: Cascade)
+  author Profile @relation(fields: [userId], references: [id])
+
+  @@map("documents")
+}
+
+model Caseworker {
+  id            String   @id @default(cuid())
+  firstName     String   @map("first_name")
+  lastName      String   @map("last_name")
+  email         String?
+  officePhone   String?  @map("office_phone")
+  mobilePhone   String?  @map("mobile_phone")
+  officeAddress String?  @map("office_address")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  childCaseworkers ChildCaseworker[]
+
+  @@map("caseworkers")
+}
+
+model ChildCaseworker {
+  id           String    @id @default(cuid())
+  childId      String    @map("child_id")
+  caseworkerId String    @map("caseworker_id")
+  startDate    DateTime  @default(now()) @map("start_date")
+  endDate      DateTime? @map("end_date")
+
+  caseworker Caseworker @relation(fields: [caseworkerId], references: [id])
+  child      Child      @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@map("child_caseworkers")
+}
+
+model Provider {
+  id           String   @id @default(cuid())
+  name         String
+  type         String
+  facilityName String   @map("facility_name")
+  address      String?
+  city         String?
+  state        String?
+  zip          String?
+  email        String?
+  phone        String?
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  childProviders ChildProvider[]
+  medications    Medication[]
+
+  @@map("providers")
+}
+
+model ChildProvider {
+  id         String    @id @default(cuid())
+  childId    String    @map("child_id")
+  providerId String    @map("provider_id")
+  startDate  DateTime  @default(now()) @map("start_date")
+  endDate    DateTime? @map("end_date")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  child    Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  provider Provider @relation(fields: [providerId], references: [id])
+
+  @@map("child_providers")
+}
+
+model Medication {
+  id                    String    @id @default(cuid())
+  childId               String    @map("child_id")
+  name                  String
+  dosage                String
+  prescribingProviderId String?   @map("prescribing_provider_id")
+  prescribedBy          String?   @map("prescribed_by")
+  startDate             DateTime  @map("start_date")
+  endDate               DateTime? @map("end_date")
+  refillDate            DateTime? @map("refill_date")
+  tag                   String?
+  directions            String?
+  notes                 String?
+  createdBy             String    @map("created_by") @db.Uuid
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  child    Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  author   Profile   @relation(fields: [createdBy], references: [id])
+  provider Provider? @relation(fields: [prescribingProviderId], references: [id])
+
+  @@map("medications")
+}
