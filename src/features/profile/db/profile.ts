@@ -15,7 +15,12 @@ export async function createProfile({
 }) {
     return await prisma.profile.upsert({
         where: { id },
-        update: {},
+        update: {
+            fullName,
+            email: email.toLowerCase(),
+            phoneNumber,
+            role,
+        },
         create: {
             id,
             fullName,

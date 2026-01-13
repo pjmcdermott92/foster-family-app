@@ -9,6 +9,7 @@ export const registerSchema = z
             .min(6, 'Password must be at least 6 characters')
             .max(20, 'Password must be less than 20 characters'),
         repeatPassword: z.string('Please confirm your password'),
+        role: z.string().optional(),
     })
     .superRefine((data, ctx) => {
         if (data.password !== data.repeatPassword) {

@@ -8,6 +8,7 @@ interface CreateProfileInput {
     email: string;
     password: string;
     repeatPassword: string;
+    role?: string;
 }
 
 export async function createProfile(unsafeData: CreateProfileInput) {
@@ -23,8 +24,9 @@ export async function createProfile(unsafeData: CreateProfileInput) {
         };
     }
 
-    const { email, password, fullName } = data;
-    const result = await createUser({ email, password });
+    const { email, password, fullName, role } = data;
+
+    const result = await createUser({ email: email.toLowerCase(), password });
 
     if (result.error || !result.user) {
         console.log(result.error);
@@ -39,8 +41,8 @@ export async function createProfile(unsafeData: CreateProfileInput) {
     const profile = await createProfileDb({
         id: result.user.id,
         fullName,
-        email,
-        role: 'foster-parent',
+        email: email.toLowerCase(),
+        role,
     });
 
     return { success: true, data: profile, message: undefined, errors: undefined };
